@@ -18,4 +18,6 @@
   On the command line *--command* is used to specify the deploy command that will be run
   and all servers that need to be deployed to should be listed on the command line, exactly
   as they appear in the f5 (more information on command line options can be found when running
-  the script with *--help*)
+  the script with *--help*).
+
+  ![alt text](https://github.com/jack-mitt/jtv_cont_deployment/blob/master/images/command_line.png "Command line input")

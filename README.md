@@ -1,4 +1,4 @@
-#
+# Introduction
 
  'this' is a script to automate deployments for JTV using coretools. This project
   is implemented with jenkins and must be given the deploy command(s) and servers
@@ -9,4 +9,13 @@
 
 # Getting Started
 
-  This job can be run on jenkins with a provided 
+  The current Jenkins job can be found [here](http://build.jewelry.acn/jenkins/job/gardeners/job/dev/job/gardeners-jack-DEPLOY-TO-DEV/). To
+  configure where and what should be deployed you can either edit the command line input under the configure tab or edit the
+  *EnvVars.txt* file.
+
+### Command Line
+
+  On the command line *--command* is used to specify the deploy command that will be run
+  and all servers that need to be deployed to should be listed on the command line, exactly
+  as they appear in the f5 (more information on command line options can be found when running
+  the script with *--help*)

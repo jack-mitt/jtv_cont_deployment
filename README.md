@@ -21,3 +21,17 @@
   the script with *--help*).
 
   ![alt text](https://github.com/jack-mitt/jtv_cont_deployment/blob/master/images/command_line.png "Command line input")
+
+  In this example the *sudo -u core coretools --restart=current* will be run on *psbedl119* and *psbeql06*.
+
+### Vars File
+
+  With the vars file option one execution of the script can run multiple deploy commands.
+  In *EnvVars.txt* lines either start with **command:** or **server:**. Commands are placed
+  before each server that that command should be run on. For the script to know to look in the vars file,
+  you must use the *--automated* option. Here is an example of the layout:
+
+  ![alt text](https://github.com/jack-mitt/jtv_cont_deployment/blob/master/images/vars_file.png "Vars file input")
+
+  In this example the first command will run on psbedl119 only and the second
+  command will run only psbeql06.

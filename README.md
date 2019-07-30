@@ -35,3 +35,22 @@
 
   In this example the first command will run on psbedl119 only and the second
   command will run only psbeql06.
+
+# Missing Pieces
+
+  This script has a few problems that will need to be fixed before it can be safely used.
+
+### Secrets
+
+  Currently this script needs secrets in three locations: authenticating to the
+  f5 and solarwinds APIs, a sudo password for the user running the script, and the
+  decryption password of the servers that the script is running on. I was unable to find
+  an efficient and safe library that acts as an encrypted wallet for this script.
+
+### Authorizing successful deploy on jupiter servers
+
+  Currently the script can authorize successful deploys on all servers except for
+  jupiter ones. This is because when the jupiter service restarts with errors and
+  the script currently only makes sure that there were no errors in startup.
+
+### Checking no important jobs are running on batch servers

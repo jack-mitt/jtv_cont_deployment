@@ -46,11 +46,12 @@ def main():
         coreToolsCommand = None
         downtime = 15
         VARS["username"] = None
-        env_vars_file = "./EnvVars.txt"
-        vars_file = "./DevVars.txt.decrypted"
-        max_connections = None
-        polite = False
-        automated = False
+        env_vars_file = "./EnvVars.txt" #Vars file that contains commands to deploy and servers to deploy to
+        vars_file = "./DevVars.txt.decrypted" #Vars file that contains secrets
+        max_connections = None #Max connections that we can shut down a server with
+        polite = False #Whether or not to check for important batch jobs
+        automated = False #Whether or not we are reading servers from EnvVars
+        ######THIS NEEDS TO BE ADDRESSED
         for i in range(1, len(sys.argv)):
             if "--" in sys.argv[i]:
                 if "username" in sys.argv[i]:
@@ -71,10 +72,10 @@ def main():
                 elif "automated" in sys.argv[i]:
                     automated = True
                 elif "command" in sys.argv[i]:
-                    command = sys.argv[i].split("=")[1]
-                    #print(command)
+                    command = sys.argv[i].split("=")[1:]
+                    command = "=".join(command)
                     command_len = len(command.split(" "))
-                    i += command_len - 1
+                    i += command_len
                     coreToolsCommand = command
 
 
@@ -82,10 +83,7 @@ def main():
                 serverList.append(sys.argv[i])
 
 
-        #envVARS = readVariables(env_vars_file) #enviornment variables
-        VARS = readVariables(vars_file)
-
-
+        VARS = readVariables(vars_file) #get secrets
 
         print()
         print("Connecting to the solarwinds api", end="...")
@@ -129,8 +127,6 @@ def main():
                 coreToolsCommand = input("Input the given coretools command: ") #deploy command
             if polite == True:
                 coreToolsCommand += "--polite"
-            print("here")
-            print(coreToolsCommand)
             check_command(coreToolsCommand)
             notDeployed += deploy_to_servers(coreToolsCommand, serverList, swis, mgmt, VARS, downtime, max_connections)
 
@@ -460,7 +456,9 @@ def main():
         print("                               The maximum amount of connections that a server")
         print("                               can have before it is available to be taken offline.")
 
-
+    '''
+    #Read the variables given in DevVars.txt
+    '''
     def readVariables(path):
         VARS = {}
         lines =  open(path, "r").readlines()
@@ -471,12 +469,16 @@ def main():
                 line = line.split(":")
                 VARS[line[0]] = line[1]
         return VARS
-
+    '''
+    #Send Status updates to slack. Current channel: cont-deploy
+    '''
     def send_slack_message(message):
         data = {"text": message}
         r = requests.post(url=SLACK_URL, json=data, verify='/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt')
 
-        #EXPLAIN THIS FORMATTING IN THE README
+    '''
+    #Read the commands and servers given in EnvVars.txt
+    '''
     def read_servers(path):
         deployments = {}
         lines = open(path, "r").readlines()
@@ -496,14 +498,14 @@ def main():
                 else:
                     print("Error incorrect formatting of command / server file. Please use --help")
         return deployments
-
+    '''
+    #make sure we were given a valid unix command
+    '''
     def check_command(coreToolsCommand):
-        #make sure we were given a valid unix command
         if coreToolsCommand[0] == " ":
             print("Invalid Command.")
             send_slack_message("Error: Invalid deploy command.")
             sys.exit(1)
-        print(coreToolsCommand)
         unixCommand = coreToolsCommand.split(" ")[0]
         cmd = ["command", unixCommand]
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -514,10 +516,12 @@ def main():
 
         #check if no deploy command was given
         if len(coreToolsCommand) == 0:
-            #send_slack_message("ERROR: No deploy command given.")
             print("ERROR: No coretools command was given.")
             sys.exit(1)
 
+    '''
+    #remove secrets from coretools output
+    '''
     def format_coretools_out(output, VARS):
         output = output.decode()
         index = output.find("[sudo]")

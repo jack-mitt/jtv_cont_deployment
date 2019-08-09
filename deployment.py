@@ -120,15 +120,24 @@ def main():
         if automated:
             deployments = read_servers(env_vars_file)
             for command in deployments:
-                check_command(command)
-                notDeployed += deploy_to_servers(command, deployments[command], swis, mgmt, VARS, downtime, max_connections)
+                nohup_index = command.find("core") + 5
+                first_half = command[:nohup_index]
+                second_half = command[nohup_index:]
+                first_half = first_half + "/bin/nohup " #add nohup so that the process does not end on logout. (man nohup)
+                nohup_command = first_half + second_half
+                notDeployed += deploy_to_servers(nohup_command, deployments[command], swis, mgmt, VARS, downtime, max_connections)
         else:
             if coreToolsCommand == None:
                 coreToolsCommand = input("Input the given coretools command: ") #deploy command
             if polite == True:
                 coreToolsCommand += "--polite"
             check_command(coreToolsCommand)
-            notDeployed += deploy_to_servers(coreToolsCommand, serverList, swis, mgmt, VARS, downtime, max_connections)
+            nohup_index = coreToolsCommand.find("core") + 5
+            first_half = coreToolsCommand[:nohup_index]
+            second_half = coreToolsCommand[nohup_index:]
+            first_half = first_half + "/bin/nohup " #add nohup so that the process does not end on logout. (man nohup)
+            nohup_command = first_half + second_half
+            notDeployed += deploy_to_servers(nohup_command, serverList, swis, mgmt, VARS, downtime, max_connections)
 
         if len(notDeployed) > 0:
             listFailedDeploys(notDeployed)
@@ -318,6 +327,7 @@ def main():
         connection = paramiko.SSHClient()
         connection.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
+        is_running_command = "sudo -u core /services/support/autodeploy/coretools_testing/coretools --isrunning=current"
         '''
         ### we will need this code once corey gets the ssh agent creds working on jenkins ###
 
@@ -353,9 +363,12 @@ def main():
             return False
 
         print("Running the deployment script", end="...")
+        print(coreToolsCommand)
         sys.stdout.flush()
+
         connection_stdin, connection_stdout, connection_stderr = connection.exec_command(coreToolsCommand, get_pty=True)
         try:
+            time.sleep(3)
             connection_stdin.write(VARS["password"] + "\n")
             time.sleep(3)
             connection_stdin.write(VARS["devpass"] + "\n")
@@ -364,18 +377,33 @@ def main():
             send_slack_message("Error writing password over socket.")
             return False
 
-        output = connection_stdout.read()
-        err = connection_stderr.read()
-
+        output = connection_stdout.read() #deploy out
+        err = connection_stderr.read() #deploy std_err
+        print(err)
         if len(err) > 3:
             err = format_coretools_out(err, VARS)
             return False
-        else:
+
+        output = format_coretools_out(output, VARS) #output from coretools --deploy without secrets
+        connection_stdin, connection_stdout, connection_stderr = connection.exec_command(is_running_command, get_pty=True)
+        try:
+            connection_stdin.write(VARS["password"] + "\n")
+        except:
+            print("Error writing over socket.")
+            send_slack_message("Error writing password over socket.")
+            return False
+        output = connection_stdout.read()
+        err = connection_stderr.read()
+        if len(err) > 0:
+            print(err)
+            return False
+        check_output = format_coretools_out(output, VARS) #output from coretools --isrunning without secrets
+        if "CORRECT" in check_output:
             print("SUCCESS")
-            output = format_coretools_out(output, VARS)
             return True
-
-
+        else:
+            print("Deploy command run, however the incorrect process is running.")
+            return False
     '''
      # This method disables alerts on a node using the solarwinds API.
     '''
@@ -532,7 +560,6 @@ def main():
                 x = format_out[:first_index]
                 y = format_out[first_index + len(VARS[k]):]
                 format_out = x + y
-        print(format_out)
         return format_out
 
     startup()

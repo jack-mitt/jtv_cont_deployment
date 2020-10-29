@@ -1,5 +1,5 @@
-command:sudo -u core /services/support/bin/coretools --deploy --src=/tmp/catalyst_server-6.53.0-release.tar.gz --symlink=current --server-type=core_catalyst_server --automated
-server:PSBEDL119:22
+command:sudo -u core /services/support/bin/coretools --deploy --src=/tmp/############# --symlink=current --server-type=core_catalyst_server --automated
+server:#########
 command:sudo -S -u core coretools --restart=current
-server:psbeql06.jewelry.qa:22
+server:############
 

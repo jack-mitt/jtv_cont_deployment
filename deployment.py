@@ -10,7 +10,7 @@ import time
 import requests
 
 
-SLACK_URL = "https://apachevendorproxy.jewelry.acn:16443/slack/services/TBGR28FL0/BKSPXM88J/7BckZMomprTI9oNK8JKkL0hA"
+SLACK_URL = "####################"
 def main():
 
     #set env variables to get around proxy
@@ -18,7 +18,7 @@ def main():
         "http": None,
         "https": None,
     }
-    os.environ['no_proxy'] = "localhost,127.0.0.1,solarwinds.jewelry.acn,*.jewelry.qa,*.jewelry.dev,*.jewelry.rx"
+    os.environ['no_proxy'] = "####################"
 
     '''
         # This is the main process for the script. It calls methods for each
@@ -89,7 +89,7 @@ def main():
         print("Connecting to the solarwinds api", end="...")
         sys.stdout.flush()
         try:
-            swis = orionsdk.SwisClient("solarwinds.jewelry.acn", VARS["username"], VARS["solarwinds-pass"]) #connect to solarwinds api
+            swis = orionsdk.SwisClient("###########", VARS["username"], VARS["solarwinds-pass"]) #connect to solarwinds api
         except Exception as e:
             if "401" in str(e):
                 send_slack_message("ERROR: Invalid solarwinds credentials.")
